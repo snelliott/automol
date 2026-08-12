@@ -866,7 +866,8 @@ def _partial_hydrogen_abstraction(qh_gra, q_gra):
 
 def single_ended_arbitrary_reactions(
     rct_gras, max_brk=2, max_frm=2, min_brk=0, min_frm=0, max_trans=3, max_species=2):
-    """find all transformations, and resulting product graphs, possible for a reactant(s)
+    """Find all transformations, and resulting product graphs, possible for a
+    reactant(s)
 
     :param rct_gras: graphs for the reactants without overlapping keys
     :param prd_gras: graphs for the products without overlapping keys
@@ -883,7 +884,7 @@ def single_ended_arbitrary_reactions(
     def _multiple_transitions_per_atom(bnd_lst):
         flat_bnds = [atm for bnd in bnd_lst for atm in bnd]
         return len(flat_bnds) - len(set(flat_bnds))
-    
+
     def _edge_connects_different_groups(frm_bnd):
         # Iterate over all pairs of groups
         atom_sets = [set(group) for group in connected_keys]
@@ -894,7 +895,7 @@ def single_ended_arbitrary_reactions(
                 if (frm_bnd & atom_sets[j]) and (frm_bnd & atom_set_i):
                     return True
         return False
-    
+
     def _radical_is_involved(frm_bnd_lst, brk_bnd_lst):
         # include adjacent atoms to radical for beta-scission etc
         # rad_pos_lst = graph.radical_atom_keys(gra, sing_res=False)
@@ -903,19 +904,19 @@ def single_ended_arbitrary_reactions(
         return (
             len(frm_bnd_set_flat & rad_incl_set) +
             len(brk_bnd_set_flat & rad_incl_set))
-    
+
     prd_info_lst = ()
     rct_gra = graph.union_from_sequence(rct_gras)
     ngb_dct = graph.atoms_neighbor_atom_keys(rct_gra)
     rad_pos_lst = graph.unsaturated_atom_keys(rct_gra)
 
-    # extended radical information set includes the radical positions 
+    # extended radical information set includes the radical positions
     # and their non-hydrogen neighbors (see _radical_is_involved)
     rad_incl_set = rad_pos_lst.union(frozenset({
         adj_atm for rad_atm in rad_pos_lst
         for adj_atm in ngb_dct[rad_atm]
         if graph.atom_symbols(rct_gra)[adj_atm] != 'H'}))
-    
+
     # we can reduce dimensionality of bXfy matrix if it is
     # not unimolecular, by enforcing that there is a forming
     # bond between species of bimoleculars
@@ -923,7 +924,8 @@ def single_ended_arbitrary_reactions(
 
     # build list of breakable bonds
     bnd_keys = graph.bond_keys(rct_gra)
-    brk_bnd_keys = [key for key in bnd_keys] #if key not in stable_bnd_keys]
+    # brk_bnd_keys = [key for key in bnd_keys] if key not in stable_bnd_keys]
+    brk_bnd_keys = list(bnd_keys) 
     # build list of formable bonds
     # ... all possible formations between atoms
     # ... but only including one of each equivalent atom
@@ -956,7 +958,7 @@ def single_ended_arbitrary_reactions(
     brk_frm_combos = itertools.product(
             range(min_brk, max_brk + 1), range(min_frm, max_frm + 1))
     brk_frm_combos = sorted(brk_frm_combos, key=lambda x: sum(x))
-    
+
     for (num_brk, num_frm) in brk_frm_combos:
         if num_brk + num_frm > max_trans:
             continue
@@ -977,7 +979,7 @@ def single_ended_arbitrary_reactions(
                     continue
                 if not _radical_is_involved(frm_bnd_combo, brk_bnd_combo):
                     continue
-                
+
                 pot_prd_gra = graph.remove_bonds(rct_gra, brk_bnd_combo)
                 pot_prd_gra = graph.add_bonds(pot_prd_gra, frm_bnd_combo)
                 prd_gras = graph.connected_components(pot_prd_gra)
@@ -992,21 +994,29 @@ def single_ended_arbitrary_reactions(
                     if any(hyp > 0 for hyp in atm_hyp_dct.values()):
                         all_valid = False
                         break
-                    
+
                     # Check that unpaired electrons are in acceptable range
                     # 0: closed shell, 1: radical, 2: triplet carbene/diradical
-                    atm_unp_dct = graph.atom_unpaired_electrons(prd_gra, bond_order=True)
+                    atm_unp_dct = graph.atom_unpaired_electrons(
+                        prd_gra, bond_order=True
+                    )
                     if any(unp > 2 for unp in atm_unp_dct.values()):
                         all_valid = False
                         break
                     # avoid diradicals
                     kek_prd_gra = graph.kekule(prd_gra)
-                    kek_atm_unp_dct = graph.atom_unpaired_electrons(kek_prd_gra, bond_order=True)
-                    if sum([1 if unp > 0 else 0 for unp in kek_atm_unp_dct.values()]) > 1:
+                    kek_atm_unp_dct = graph.atom_unpaired_electrons(
+                        kek_prd_gra, bond_order=True
+                    )
+                    n_unp = sum(
+                        1 if unp > 0 else 0 for unp in kek_atm_unp_dct.values()
+                    )
+                    if n_unp > 1:
                         all_valid = False
                         break
 
-                # ensure reactant is not identical to product (can happen with 1 break, 1 form)
+                # ensure reactant is not identical to product (can happen
+                # with 1 break, 1 form)
                 if len(rct_gras) == len(prd_gras):
                     if graph.isomorphic(rct_gra, pot_prd_gra, stereo=True):
                         all_valid = False
