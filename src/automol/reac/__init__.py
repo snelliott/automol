@@ -66,6 +66,7 @@ from ._3find import (
     ring_forming_scissions,
     substitutions,
     trivial,
+    single_ended_arbitrary_reactions,
 )
 
 # TS geometries
@@ -183,6 +184,7 @@ __all__ = [
     "ring_forming_scissions",
     "eliminations",
     "hydrogen_abstractions",
+    "single_ended_arbitrary_reactions",
     "additions",
     "insertions",
     "substitutions",
