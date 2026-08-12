@@ -925,7 +925,7 @@ def single_ended_arbitrary_reactions(
     # build list of breakable bonds
     bnd_keys = graph.bond_keys(rct_gra)
     # brk_bnd_keys = [key for key in bnd_keys] if key not in stable_bnd_keys]
-    brk_bnd_keys = list(bnd_keys) 
+    brk_bnd_keys = list(bnd_keys)
     # build list of formable bonds
     # ... all possible formations between atoms
     # ... but only including one of each equivalent atom
